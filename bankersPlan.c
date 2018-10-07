@@ -31,3 +31,80 @@ For the last case you can find below the amounts of his account at the beginning
 f11 = -5 so he has no way to withdraw something for his living in year 12.
 Note: Don't forget to convert the percent parameters as percentages in the body of your function: if a parameter percent is 2 you have to convert it to 0.02.
 */
+#include <cmath>
+#include <random>
+
+void testequal(bool ans, bool sol)
+{
+    Assert::That(ans, Equals(sol));
+}
+
+bool fortuneSol44(int f0, double p, int c0, int n, double i)
+{
+    int prev_x = f0, prev_c = c0, nou_x = -1, nou_c = -1;
+    for (int k = 1; k < n; k++)
+    {
+        nou_x = static_cast<int>(std::floor(prev_x + p / 100.0 * prev_x - prev_c));
+        nou_c = static_cast<int>(std::floor(prev_c + i / 100.0 * prev_c));
+        prev_x = nou_x;
+        prev_c = nou_c;
+    }
+    return (nou_x >= 0);
+}
+
+std::random_device rd;
+std::mt19937 rng(rd());
+
+void randomtesting()
+{
+    std::cout << " ****************** \n";
+    std::uniform_int_distribution<int> uni1(100000, 15000000);
+    std::uniform_int_distribution<int> uni2(10, 100);
+    std::uniform_int_distribution<int> uni3(100, 1500);
+    std::uniform_int_distribution<int> uni4(10, 25);
+    std::uniform_int_distribution<int> uni5(10, 80);
+
+    for (int n = 0; n < 100; ++n)
+    {
+        int f0 = uni1(rng);
+        double p  = uni2(rng) / 10.0;
+        int c0 = floor(f0 / 15.0 + uni3(rng));
+        int y  = uni4(rng);
+        double j  = uni5(rng) / 10.0;
+        //std::cout << "f0 " << f0 << " p " << p << " c0 " << c0 << " n " << y << " infl " << j << std::endl;
+        int sol = fortuneSol44(f0, p, c0, y, j);
+        int ans = BankerPlan::fortune(f0, p, c0, y, j);
+        testequal(ans, sol);
+    }
+}
+
+Describe(fortune_Tests)
+{
+    It(Fixed_Tests)
+    {
+        testequal(BankerPlan::fortune(100000, 1, 2000, 15, 1), true);
+        testequal(BankerPlan::fortune(100000, 1, 9185, 12, 1), false);
+        testequal(BankerPlan::fortune(100000000, 1, 100000, 50, 1), true);
+        testequal(BankerPlan::fortune(100000000, 1.5, 10000000, 50, 1), false);
+        testequal(BankerPlan::fortune(100000000, 5, 1000000, 50, 1), true);
+    }
+    It(Random_Tests)
+    {
+        randomtesting();
+    }
+};
+class BankerPlan
+{
+public:
+    static bool fortune(int f0, double p, int c0, int n, double i);
+};
+
+bool BankerPlan::fortune(int f0, double p, int c0, int n, double i) {
+    double base = f0, c = c0;
+    for(int j=1;j<n;j++) {
+        base = base + (double(p/100.0) * base) - c;
+        c = c + c*double(i/100.0);
+        if(base<0)return false;
+    }
+    return base>0;
+}
